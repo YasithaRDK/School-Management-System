@@ -1,0 +1,100 @@
+# .NET Core
+bin/
+obj/
+out/
+
+# .NET Core User Secrets
+**/secrets.json
+
+# .NET Core Environments
+.env
+.env.*
+
+# Visual Studio
+.vscode/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# ASP.NET Scaffolding
+.scaffolding
+
+# Logs
+logs/
+*.log
+
+# NPM packages
+node_modules/
+
+# LibMan
+libman.json
+wwwroot/lib/
+
+# Publish output
+publish/
+wwwroot/
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Code coverage
+coverage/
+*.coverage
+*.coveragexml
+*.log
+
+# Backup & temporary files
+*.bak
+*.swp
+*.tmp
+*.temp
+
+# Docker
+**/[Dd]ockerfile
+**/docker-compose*
+!**/Dockerfile
+!**/docker-compose*
+
+# Database files
+*.mdf
+*.ldf
+*.ndf
+*.sdf
+
+# Entity Framework
+**/Migrations/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+.nuget/packages/
+.nuget/repository/
+
+# JetBrains Rider
+.idea/
+
+# Windows
+*.db
+*.db-wal
+*.db-shm
+desktop.ini
+Thumbs.db
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# Ignore sensitive settings
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Staging.json
