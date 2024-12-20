@@ -1,10 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace SchoolManagement.API.Models
 {
     public class TeacherSubject
     {
-        public int TeacherId { get; set; } // Foreign Key
+        [Required(ErrorMessage = "Teacher Id is required")]
+        [ForeignKey("Teacher")]
+        public int TeacherId { get; set; }
         public Teacher Teacher { get; set; }
-        public int SubjectId { get; set; } // Foreign Key
-        public Classroom Subject { get; set; }
+
+        [Required(ErrorMessage = "Subject Id is required")]
+        [ForeignKey("Subject")]
+        public int SubjectId { get; set; }
+        public Subject Subject { get; set; }
     }
 }
