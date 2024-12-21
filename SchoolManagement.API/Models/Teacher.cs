@@ -23,5 +23,7 @@ namespace SchoolManagement.API.Models
         [Required(ErrorMessage = "Email Address is required")]
         [EmailAddress(ErrorMessage = "Invalid Email Address format.")]
         public string EmailAddress { get; set; }
+        public ICollection<TeacherClassroom> TeacherClassrooms { get; set; }
+        public ICollection<TeacherSubject> TeacherSubjects { get; set; }
     }
 }

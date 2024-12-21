@@ -10,5 +10,6 @@ namespace SchoolManagement.API.Models
         [Required(ErrorMessage = "Subject Name is required")]
         [MaxLength(100, ErrorMessage = "Subject Name cannot exceed 100 characters.")]
         public string SubjectName { get; set; }
+        public ICollection<TeacherSubject> TeacherSubjects { get; set; }
     }
 }
