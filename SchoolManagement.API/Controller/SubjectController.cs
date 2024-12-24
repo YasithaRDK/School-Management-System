@@ -7,7 +7,6 @@ using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
 {
-
     [ApiController]
     [Route("/api/subjects")]
     public class SubjectController : ControllerBase
@@ -31,7 +30,7 @@ namespace SchoolManagement.API.Controller
         }
 
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetSingleClassroom([FromRoute] int id)
+        public async Task<IActionResult> GetSingleSubject([FromRoute] int id)
         {
             var subject = await _context.Subjects
             .Select(c => new SubjectResponseDto
@@ -50,7 +49,7 @@ namespace SchoolManagement.API.Controller
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateClassroom([FromBody] SubjectRequestDto subjectRequest)
+        public async Task<IActionResult> CreateSubject([FromBody] SubjectRequestDto subjectRequest)
         {
             if (!ModelState.IsValid)
             {
@@ -69,7 +68,7 @@ namespace SchoolManagement.API.Controller
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateClassroom([FromRoute] int id, [FromBody] SubjectRequestDto subjectRequest)
+        public async Task<IActionResult> UpdateSubject([FromRoute] int id, [FromBody] SubjectRequestDto subjectRequest)
         {
             if (!ModelState.IsValid)
             {
