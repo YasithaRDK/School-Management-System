@@ -64,7 +64,7 @@ namespace SchoolManagement.API.Controller
 
                 return Ok(response);
             }
-            catch
+            catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Internal Server Error" });
             }
@@ -124,7 +124,7 @@ namespace SchoolManagement.API.Controller
 
                 return StatusCode(201, new { message = "Teacher updated!" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Internal Server Error" });
             }
@@ -146,7 +146,7 @@ namespace SchoolManagement.API.Controller
 
                 return NoContent();
             }
-            catch
+            catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Internal Server Error" });
             }

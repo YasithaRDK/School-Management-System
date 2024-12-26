@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
 using SchoolManagement.API.Data.Dtos;
+using SchoolManagement.API.Interfaces;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -11,29 +12,37 @@ namespace SchoolManagement.API.Controller
 
     public class TeacherClassroomController : ControllerBase
     {
-        private readonly ApplicationDBContext _context;
-        public TeacherClassroomController(ApplicationDBContext context)
+        private readonly ITeacherClassroomRepository _teacherClassroomRepo;
+        private readonly ITeacherRepository _teacherRepo;
+        private readonly IClassroomRepository _classroomRepo;
+        public TeacherClassroomController(ITeacherClassroomRepository teacherClassroomRepo, ITeacherRepository teacherRepo, IClassroomRepository classroomRepo)
         {
-            _context = context;
+            _teacherClassroomRepo = teacherClassroomRepo;
+            _teacherRepo = teacherRepo;
+            _classroomRepo = classroomRepo;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllAllocateClassrooms()
         {
-            var teacherClassrooms = await _context.TeacherClassrooms
-            .Include(tc => tc.Teacher)
-            .Include(tc => tc.Classroom)
-            .ToListAsync();
-
-            var response = teacherClassrooms.Select(teacherClassroom => new
+            try
             {
-                TeacherId = teacherClassroom.Teacher.TeacherId,
-                TeacherName = teacherClassroom.Teacher.FirstName + " " + teacherClassroom.Teacher.LastName,
-                ClassroomId = teacherClassroom.Classroom.ClassroomId,
-                ClassroomName = teacherClassroom.Classroom.ClassroomName
-            });
+                var teacherClassrooms = await _teacherClassroomRepo.GetAllAllocateClassroomsAsync();
 
-            return Ok(response);
+                var response = teacherClassrooms.Select(tc => new
+                {
+                    TeacherId = tc.Teacher.TeacherId,
+                    TeacherName = tc.Teacher.FirstName + " " + tc.Teacher.LastName,
+                    ClassroomId = tc.Classroom.ClassroomId,
+                    ClassroomName = tc.Classroom.ClassroomName
+                });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpGet("{teacherId:int}")]
@@ -41,18 +50,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var teacherClassrooms = await _context.TeacherClassrooms
-                .Where(tc => tc.TeacherId == teacherId)
-                .Include(tc => tc.Teacher)
-                .Include(tc => tc.Classroom)
-                .Select(tc => new
-                {
-                    TeacherId = tc.Teacher.TeacherId,
-                    TeacherName = tc.Teacher.FirstName + " " + tc.Teacher.LastName,
-                    ClassroomId = tc.Classroom.ClassroomId,
-                    ClassroomName = tc.Classroom.ClassroomName
-                })
-                .ToListAsync();
+                var teacherClassrooms = await _teacherClassroomRepo.GetAllocateClassroomsOfTeacherAsync(teacherId);
 
                 if (!teacherClassrooms.Any())
                 {
@@ -62,11 +60,11 @@ namespace SchoolManagement.API.Controller
                 var response = new
                 {
                     TeacherId = teacherClassrooms.First().TeacherId,
-                    TeacherName = teacherClassrooms.First().TeacherName,
+                    TeacherName = teacherClassrooms.First().Teacher.FirstName + " " + teacherClassrooms.First().Teacher.LastName,
                     Classrooms = teacherClassrooms.Select(c => new
                     {
-                        ClassroomId = c.ClassroomId,
-                        ClassroomName = c.ClassroomName
+                        ClassroomId = c.Classroom.ClassroomId,
+                        ClassroomName = c.Classroom.ClassroomName
                     })
                 };
 
@@ -88,22 +86,21 @@ namespace SchoolManagement.API.Controller
 
             try
             {
-                var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherId == teacherClassroom.TeacherId);
+                var teacher = await _teacherRepo.TeacherExistsAsync(teacherClassroom.TeacherId);
 
-                if (teacher == null)
+                if (!teacher)
                 {
                     return BadRequest(new { message = "Teacher not found" });
                 }
 
-                var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.ClassroomId == teacherClassroom.ClassroomId);
+                var classroom = await _classroomRepo.ClassroomExistsAsync(teacherClassroom.ClassroomId);
 
-                if (classroom == null)
+                if (!classroom)
                 {
                     return BadRequest(new { message = "Classroom not found" });
                 }
 
-                var existingTeacherClassroom = await _context.TeacherClassrooms
-                .FirstOrDefaultAsync(tc => tc.TeacherId == teacherClassroom.TeacherId && tc.ClassroomId == teacherClassroom.ClassroomId);
+                var existingTeacherClassroom = await _teacherClassroomRepo.GetTeacherClassroomAsync(teacherClassroom.TeacherId, teacherClassroom.ClassroomId);
 
                 if (existingTeacherClassroom != null)
                 {
@@ -116,9 +113,7 @@ namespace SchoolManagement.API.Controller
                     ClassroomId = teacherClassroom.ClassroomId,
                 };
 
-                await _context.TeacherClassrooms.AddAsync(req);
-
-                await _context.SaveChangesAsync();
+                await _teacherClassroomRepo.AddTeacherClassroomAsync(req);
 
                 return StatusCode(201, new { message = "The classroom assigned to the teacher" });
             }
@@ -133,15 +128,14 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var teacherClassroom = await _context.TeacherClassrooms.FirstOrDefaultAsync(ts => ts.TeacherId == teacherId && ts.ClassroomId == classroomId);
+                var teacherClassroom = await _teacherClassroomRepo.GetTeacherClassroomAsync(teacherId, classroomId);
 
                 if (teacherClassroom == null)
                 {
                     return NotFound();
                 }
 
-                _context.TeacherClassrooms.Remove(teacherClassroom);
-                await _context.SaveChangesAsync();
+                await _teacherClassroomRepo.DeleteTeacherClassroomAsync(teacherClassroom);
 
                 return NoContent();
             }
