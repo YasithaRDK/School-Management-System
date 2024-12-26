@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
+using SchoolManagement.API.Interfaces;
+using SchoolManagement.API.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<IClassroomRepository, ClassroomRepository>();
 
 var app = builder.Build();
 

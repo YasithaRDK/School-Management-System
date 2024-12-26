@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using SchoolManagement.API.Data;
 using SchoolManagement.API.Data.Dtos;
+using SchoolManagement.API.Interfaces;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -10,10 +11,10 @@ namespace SchoolManagement.API.Controller
     [Route("/api/classrooms")]
     public class ClassroomController : ControllerBase
     {
-        private readonly ApplicationDBContext _context;
-        public ClassroomController(ApplicationDBContext context)
+        private readonly IClassroomRepository _repository;
+        public ClassroomController(IClassroomRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
         [HttpGet]
@@ -21,8 +22,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var classrooms = await _context.Classrooms
-            .ToListAsync();
+                var classrooms = await _repository.GetAllClassroomsAsync();
 
                 var response = classrooms.Select(classroom => new
                 {
@@ -43,8 +43,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var classroom = await _context.Classrooms
-            .FirstOrDefaultAsync(i => i.ClassroomId == id);
+                var classroom = await _repository.GetClassroomByIdAsync(id);
 
                 if (classroom == null)
                 {
@@ -80,8 +79,7 @@ namespace SchoolManagement.API.Controller
                     ClassroomName = classroomRequest.ClassroomName,
                 };
 
-                await _context.Classrooms.AddAsync(req);
-                await _context.SaveChangesAsync();
+                await _repository.AddClassroomAsync(req);
 
                 return StatusCode(201, new { message = "Classroom created!" });
             }
@@ -101,7 +99,7 @@ namespace SchoolManagement.API.Controller
 
             try
             {
-                var classroom = await _context.Classrooms.FirstOrDefaultAsync(i => i.ClassroomId == id);
+                var classroom = await _repository.GetClassroomByIdAsync(id);
 
                 if (classroom == null)
                 {
@@ -110,7 +108,7 @@ namespace SchoolManagement.API.Controller
 
                 classroom.ClassroomName = classroomRequest.ClassroomName;
 
-                await _context.SaveChangesAsync();
+                await _repository.UpdateClassroomAsync(classroom);
 
                 return StatusCode(201, new { message = "Classroom updated!" });
             }
@@ -125,17 +123,20 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var classroom = await _context.Classrooms.FirstOrDefaultAsync(i => i.ClassroomId == id);
+                var classroom = await _repository.GetClassroomByIdAsync(id);
 
                 if (classroom == null)
                 {
                     return NotFound(new { message = "Classroom not found" });
                 }
 
-                _context.Remove(classroom);
-                await _context.SaveChangesAsync();
+                await _repository.DeleteClassroomAsync(classroom);
 
                 return NoContent();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && sqlEx.Number == 547)
+            {
+                return BadRequest(new { message = "Cannot delete the classroom because it is associated with other entities (e.g., students)." });
             }
             catch (Exception ex)
             {
