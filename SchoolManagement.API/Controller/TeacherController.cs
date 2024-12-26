@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
 using SchoolManagement.API.Data.Dtos;
+using SchoolManagement.API.Interfaces;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -10,10 +11,10 @@ namespace SchoolManagement.API.Controller
     [Route("/api/teachers")]
     public class TeacherController : ControllerBase
     {
-        private readonly ApplicationDBContext _context;
-        public TeacherController(ApplicationDBContext context)
+        private readonly ITeacherRepository _teacherRepo;
+        public TeacherController(ITeacherRepository teacherrepo)
         {
-            _context = context;
+            _teacherRepo = teacherrepo;
         }
 
         [HttpGet]
@@ -21,8 +22,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var teachers = await _context.Teachers
-            .ToListAsync();
+                var teachers = await _teacherRepo.GetAllTeachersAsync();
 
                 var response = teachers.Select(teacher => new
                 {
@@ -46,8 +46,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var teacher = await _context.Teachers
-            .FirstOrDefaultAsync(i => i.TeacherId == id);
+                var teacher = await _teacherRepo.GetTeacherByIdAsync(id);
 
                 if (teacher == null)
                 {
@@ -89,8 +88,7 @@ namespace SchoolManagement.API.Controller
                     ContactNo = teacherRequest.ContactNo,
                 };
 
-                await _context.Teachers.AddAsync(req);
-                await _context.SaveChangesAsync();
+                await _teacherRepo.AddTeacherAsync(req);
 
                 return StatusCode(201, new { message = "Teacher created!" });
             }
@@ -110,7 +108,7 @@ namespace SchoolManagement.API.Controller
 
             try
             {
-                var teacher = await _context.Teachers.FirstOrDefaultAsync(i => i.TeacherId == id);
+                var teacher = await _teacherRepo.GetTeacherByIdAsync(id);
 
                 if (teacher == null)
                 {
@@ -122,7 +120,7 @@ namespace SchoolManagement.API.Controller
                 teacher.EmailAddress = teacherRequest.EmailAddress;
                 teacher.ContactNo = teacherRequest.ContactNo;
 
-                await _context.SaveChangesAsync();
+                await _teacherRepo.UpdateTeacherAsync(teacher);
 
                 return StatusCode(201, new { message = "Teacher updated!" });
             }
@@ -137,15 +135,14 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var teacher = await _context.Teachers.FirstOrDefaultAsync(i => i.TeacherId == id);
+                var teacher = await _teacherRepo.GetTeacherByIdAsync(id);
 
                 if (teacher == null)
                 {
                     return NotFound(new { message = "Teacher not found" });
                 }
 
-                _context.Remove(teacher);
-                await _context.SaveChangesAsync();
+                await _teacherRepo.DeleteTeacherAsync(teacher);
 
                 return NoContent();
             }
