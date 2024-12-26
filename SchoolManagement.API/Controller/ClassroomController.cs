@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
-using SchoolManagement.API.Data.Dtos.RequestDtos;
-using SchoolManagement.API.Data.Dtos.ResponseDtos;
+using SchoolManagement.API.Data.Dtos;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -20,32 +19,50 @@ namespace SchoolManagement.API.Controller
         [HttpGet]
         public async Task<IActionResult> GetAllClassrooms()
         {
-            var classrooms = await _context.Classrooms
-            .Select(c => new ClassroomResponseDto
+            try
             {
-                ClassroomId = c.ClassroomId,
-                ClassroomName = c.ClassroomName,
-            }).ToListAsync();
-            return Ok(classrooms);
+                var classrooms = await _context.Classrooms
+            .ToListAsync();
+
+                var response = classrooms.Select(classroom => new
+                {
+                    ClassroomId = classroom.ClassroomId,
+                    ClassroomName = classroom.ClassroomName,
+                });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetSingleClassroom([FromRoute] int id)
         {
-            var classroom = await _context.Classrooms
-            .Select(c => new ClassroomResponseDto
+            try
             {
-                ClassroomId = c.ClassroomId,
-                ClassroomName = c.ClassroomName,
-            })
+                var classroom = await _context.Classrooms
             .FirstOrDefaultAsync(i => i.ClassroomId == id);
 
-            if (classroom == null)
-            {
-                return NotFound(new { message = "Classroom not found." });
-            }
+                if (classroom == null)
+                {
+                    return NotFound(new { message = "Classroom not found." });
+                }
 
-            return Ok(classroom);
+                var response = new
+                {
+                    ClassroomId = classroom.ClassroomId,
+                    ClassroomName = classroom.ClassroomName,
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpPost]
@@ -56,15 +73,22 @@ namespace SchoolManagement.API.Controller
                 return BadRequest(ModelState);
             }
 
-            Classroom req = new Classroom
+            try
             {
-                ClassroomName = classroomRequest.ClassroomName,
-            };
+                Classroom req = new Classroom
+                {
+                    ClassroomName = classroomRequest.ClassroomName,
+                };
 
-            await _context.Classrooms.AddAsync(req);
-            await _context.SaveChangesAsync();
+                await _context.Classrooms.AddAsync(req);
+                await _context.SaveChangesAsync();
 
-            return StatusCode(201, new { message = "Classroom created!" });
+                return StatusCode(201, new { message = "Classroom created!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpPut("{id:int}")]
@@ -75,34 +99,48 @@ namespace SchoolManagement.API.Controller
                 return BadRequest(ModelState);
             }
 
-            var classroom = await _context.Classrooms.FirstOrDefaultAsync(i => i.ClassroomId == id);
-
-            if (classroom == null)
+            try
             {
-                return NotFound(new { message = "Classroom not found" });
+                var classroom = await _context.Classrooms.FirstOrDefaultAsync(i => i.ClassroomId == id);
+
+                if (classroom == null)
+                {
+                    return NotFound(new { message = "Classroom not found" });
+                }
+
+                classroom.ClassroomName = classroomRequest.ClassroomName;
+
+                await _context.SaveChangesAsync();
+
+                return StatusCode(201, new { message = "Classroom updated!" });
             }
-
-            classroom.ClassroomName = classroomRequest.ClassroomName;
-
-            await _context.SaveChangesAsync();
-
-            return StatusCode(201, new { message = "Classroom updated!" });
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteClassroom([FromRoute] int id)
         {
-            var classroom = await _context.Classrooms.FirstOrDefaultAsync(i => i.ClassroomId == id);
-
-            if (classroom == null)
+            try
             {
-                return NotFound(new { message = "Classroom not found" });
+                var classroom = await _context.Classrooms.FirstOrDefaultAsync(i => i.ClassroomId == id);
+
+                if (classroom == null)
+                {
+                    return NotFound(new { message = "Classroom not found" });
+                }
+
+                _context.Remove(classroom);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Remove(classroom);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
     }
 }
