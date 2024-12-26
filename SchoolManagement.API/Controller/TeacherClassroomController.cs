@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
-using SchoolManagement.API.Data.Dtos.RequestDtos;
+using SchoolManagement.API.Data.Dtos;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -21,54 +21,61 @@ namespace SchoolManagement.API.Controller
         public async Task<IActionResult> GetAllAllocateClassrooms()
         {
             var teacherClassrooms = await _context.TeacherClassrooms
-            .GroupBy(tc => new
-            {
-                tc.Teacher.TeacherId,
-                TeacherName = tc.Teacher.FirstName + " " + tc.Teacher.LastName
-            })
-            .Select(g => new
-            {
-                TeacherId = g.Key.TeacherId,
-                TeacherName = g.Key.TeacherName,
-                Classrooms = g.Select(ts => new
-                {
-                    ClassroomId = ts.Classroom.ClassroomId,
-                    ClassroomName = ts.Classroom.ClassroomName
-                }).ToList()
-            })
+            .Include(tc => tc.Teacher)
+            .Include(tc => tc.Classroom)
             .ToListAsync();
 
-            return Ok(teacherClassrooms);
+            var response = teacherClassrooms.Select(teacherClassroom => new
+            {
+                TeacherId = teacherClassroom.Teacher.TeacherId,
+                TeacherName = teacherClassroom.Teacher.FirstName + " " + teacherClassroom.Teacher.LastName,
+                ClassroomId = teacherClassroom.Classroom.ClassroomId,
+                ClassroomName = teacherClassroom.Classroom.ClassroomName
+            });
+
+            return Ok(response);
         }
 
         [HttpGet("{teacherId:int}")]
         public async Task<IActionResult> GetAllocateClassroomsOfTeacher([FromRoute] int teacherId)
         {
-            var teacherClassrooms = await _context.TeacherClassrooms
+            try
+            {
+                var teacherClassrooms = await _context.TeacherClassrooms
                 .Where(tc => tc.TeacherId == teacherId)
-                .GroupBy(tc => new
+                .Include(tc => tc.Teacher)
+                .Include(tc => tc.Classroom)
+                .Select(tc => new
                 {
-                    tc.Teacher.TeacherId,
-                    TeacherName = tc.Teacher.FirstName + " " + tc.Teacher.LastName
-                })
-                .Select(g => new
-                {
-                    TeacherId = g.Key.TeacherId,
-                    TeacherName = g.Key.TeacherName,
-                    Classrooms = g.Select(ts => new
-                    {
-                        ClassroomId = ts.Classroom.ClassroomId,
-                        ClassroomName = ts.Classroom.ClassroomName
-                    }).ToList()
+                    TeacherId = tc.Teacher.TeacherId,
+                    TeacherName = tc.Teacher.FirstName + " " + tc.Teacher.LastName,
+                    ClassroomId = tc.Classroom.ClassroomId,
+                    ClassroomName = tc.Classroom.ClassroomName
                 })
                 .ToListAsync();
 
-            if (teacherClassrooms == null)
-            {
-                return NotFound();
-            }
+                if (!teacherClassrooms.Any())
+                {
+                    return NotFound();
+                }
 
-            return Ok(teacherClassrooms);
+                var response = new
+                {
+                    TeacherId = teacherClassrooms.First().TeacherId,
+                    TeacherName = teacherClassrooms.First().TeacherName,
+                    Classrooms = teacherClassrooms.Select(c => new
+                    {
+                        ClassroomId = c.ClassroomId,
+                        ClassroomName = c.ClassroomName
+                    })
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpPost]
@@ -79,47 +86,69 @@ namespace SchoolManagement.API.Controller
                 return BadRequest(ModelState);
             }
 
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherId == teacherClassroom.TeacherId);
-
-            if (teacher == null)
+            try
             {
-                return BadRequest(new { message = "Teacher not found" });
+                var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherId == teacherClassroom.TeacherId);
+
+                if (teacher == null)
+                {
+                    return BadRequest(new { message = "Teacher not found" });
+                }
+
+                var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.ClassroomId == teacherClassroom.ClassroomId);
+
+                if (classroom == null)
+                {
+                    return BadRequest(new { message = "Classroom not found" });
+                }
+
+                var existingTeacherClassroom = await _context.TeacherClassrooms
+                .FirstOrDefaultAsync(tc => tc.TeacherId == teacherClassroom.TeacherId && tc.ClassroomId == teacherClassroom.ClassroomId);
+
+                if (existingTeacherClassroom != null)
+                {
+                    return Conflict(new { message = "This classroom is already assigned to the teacher" });
+                }
+
+                TeacherClassroom req = new TeacherClassroom
+                {
+                    TeacherId = teacherClassroom.TeacherId,
+                    ClassroomId = teacherClassroom.ClassroomId,
+                };
+
+                await _context.TeacherClassrooms.AddAsync(req);
+
+                await _context.SaveChangesAsync();
+
+                return StatusCode(201, new { message = "The classroom assigned to the teacher" });
             }
-
-            var classroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.ClassroomId == teacherClassroom.ClassroomId);
-
-            if (classroom == null)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = "Classroom not found" });
+                return StatusCode(500, new { message = "Internal Server Error" });
             }
-
-            TeacherClassroom req = new TeacherClassroom
-            {
-                TeacherId = teacherClassroom.TeacherId,
-                ClassroomId = teacherClassroom.ClassroomId,
-            };
-
-            await _context.TeacherClassrooms.AddAsync(req);
-
-            await _context.SaveChangesAsync();
-
-            return StatusCode(201, new { message = "The classroom assigned to the teacher" });
         }
 
         [HttpDelete("{teacherId:int}/{classroomId:int}")]
         public async Task<IActionResult> DeleteAllocateClassroom([FromRoute] int teacherId, [FromRoute] int classroomId)
         {
-            var teacherClassroom = await _context.TeacherClassrooms.FirstOrDefaultAsync(ts => ts.TeacherId == teacherId && ts.ClassroomId == classroomId);
-
-            if (teacherClassroom == null)
+            try
             {
-                return NotFound();
+                var teacherClassroom = await _context.TeacherClassrooms.FirstOrDefaultAsync(ts => ts.TeacherId == teacherId && ts.ClassroomId == classroomId);
+
+                if (teacherClassroom == null)
+                {
+                    return NotFound();
+                }
+
+                _context.TeacherClassrooms.Remove(teacherClassroom);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.TeacherClassrooms.Remove(teacherClassroom);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
     }
 }

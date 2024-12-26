@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SchoolManagement.API.Data.Dtos.RequestDtos
+namespace SchoolManagement.API.Data.Dtos
 {
     public class TeacherSubjectRequestDto
     {

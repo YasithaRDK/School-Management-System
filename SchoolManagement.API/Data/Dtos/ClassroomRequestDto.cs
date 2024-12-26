@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SchoolManagement.API.Data.Dtos.RequestDtos
+namespace SchoolManagement.API.Data.Dtos
 {
     public class ClassroomRequestDto
     {

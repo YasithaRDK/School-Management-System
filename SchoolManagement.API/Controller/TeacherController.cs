@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
-using SchoolManagement.API.Data.Dtos.RequestDtos;
-using SchoolManagement.API.Data.Dtos.ResponseDtos;
+using SchoolManagement.API.Data.Dtos;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -20,38 +19,56 @@ namespace SchoolManagement.API.Controller
         [HttpGet]
         public async Task<IActionResult> GetAllTeachers()
         {
-            var teachers = await _context.Teachers
-            .Select(c => new TeacherResponseDto
+            try
             {
-                TeacherId = c.TeacherId,
-                FirstName = c.FirstName,
-                LastName = c.LastName,
-                EmailAddress = c.EmailAddress,
-                ContactNo = c.ContactNo,
-            }).ToListAsync();
-            return Ok(teachers);
+                var teachers = await _context.Teachers
+            .ToListAsync();
+
+                var response = teachers.Select(teacher => new
+                {
+                    TeacherId = teacher.TeacherId,
+                    FirstName = teacher.FirstName,
+                    LastName = teacher.LastName,
+                    EmailAddress = teacher.EmailAddress,
+                    ContactNo = teacher.ContactNo,
+                });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetSingleClassroom([FromRoute] int id)
         {
-            var teacher = await _context.Teachers
-            .Select(c => new TeacherResponseDto
+            try
             {
-                TeacherId = c.TeacherId,
-                FirstName = c.FirstName,
-                LastName = c.LastName,
-                EmailAddress = c.EmailAddress,
-                ContactNo = c.ContactNo,
-            })
+                var teacher = await _context.Teachers
             .FirstOrDefaultAsync(i => i.TeacherId == id);
 
-            if (teacher == null)
-            {
-                return NotFound(new { message = "Teacher not found." });
-            }
+                if (teacher == null)
+                {
+                    return NotFound(new { message = "Teacher not found." });
+                }
 
-            return Ok(teacher);
+                var response = new
+                {
+                    TeacherId = teacher.TeacherId,
+                    FirstName = teacher.FirstName,
+                    LastName = teacher.LastName,
+                    EmailAddress = teacher.EmailAddress,
+                    ContactNo = teacher.ContactNo,
+                };
+
+                return Ok(response);
+            }
+            catch
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpPost]
@@ -62,18 +79,25 @@ namespace SchoolManagement.API.Controller
                 return BadRequest(ModelState);
             }
 
-            Teacher req = new Teacher
+            try
             {
-                FirstName = teacherRequest.FirstName,
-                LastName = teacherRequest.LastName,
-                EmailAddress = teacherRequest.EmailAddress,
-                ContactNo = teacherRequest.ContactNo,
-            };
+                Teacher req = new Teacher
+                {
+                    FirstName = teacherRequest.FirstName,
+                    LastName = teacherRequest.LastName,
+                    EmailAddress = teacherRequest.EmailAddress,
+                    ContactNo = teacherRequest.ContactNo,
+                };
 
-            await _context.Teachers.AddAsync(req);
-            await _context.SaveChangesAsync();
+                await _context.Teachers.AddAsync(req);
+                await _context.SaveChangesAsync();
 
-            return StatusCode(201, new { message = "Teacher created!" });
+                return StatusCode(201, new { message = "Teacher created!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpPut("{id:int}")]
@@ -84,37 +108,51 @@ namespace SchoolManagement.API.Controller
                 return BadRequest(ModelState);
             }
 
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(i => i.TeacherId == id);
-
-            if (teacher == null)
+            try
             {
-                return NotFound(new { message = "Teacher not found" });
+                var teacher = await _context.Teachers.FirstOrDefaultAsync(i => i.TeacherId == id);
+
+                if (teacher == null)
+                {
+                    return NotFound(new { message = "Teacher not found" });
+                }
+
+                teacher.FirstName = teacherRequest.FirstName;
+                teacher.LastName = teacherRequest.LastName;
+                teacher.EmailAddress = teacherRequest.EmailAddress;
+                teacher.ContactNo = teacherRequest.ContactNo;
+
+                await _context.SaveChangesAsync();
+
+                return StatusCode(201, new { message = "Teacher updated!" });
             }
-
-            teacher.FirstName = teacherRequest.FirstName;
-            teacher.LastName = teacherRequest.LastName;
-            teacher.EmailAddress = teacherRequest.EmailAddress;
-            teacher.ContactNo = teacherRequest.ContactNo;
-
-            await _context.SaveChangesAsync();
-
-            return StatusCode(201, new { message = "Teacher updated!" });
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteTeacher([FromRoute] int id)
         {
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(i => i.TeacherId == id);
-
-            if (teacher == null)
+            try
             {
-                return NotFound(new { message = "Teacher not found" });
+                var teacher = await _context.Teachers.FirstOrDefaultAsync(i => i.TeacherId == id);
+
+                if (teacher == null)
+                {
+                    return NotFound(new { message = "Teacher not found" });
+                }
+
+                _context.Remove(teacher);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Remove(teacher);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
     }
 }

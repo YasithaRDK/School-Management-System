@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
-using SchoolManagement.API.Data.Dtos.RequestDtos;
-using SchoolManagement.API.Data.Dtos.ResponseDtos;
+using SchoolManagement.API.Data.Dtos;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -20,32 +19,50 @@ namespace SchoolManagement.API.Controller
         [HttpGet]
         public async Task<IActionResult> GetAllSubjects()
         {
-            var subjects = await _context.Subjects
-            .Select(c => new SubjectResponseDto
+            try
             {
-                SubjectId = c.SubjectId,
-                SubjectName = c.SubjectName,
-            }).ToListAsync();
-            return Ok(subjects);
+                var subjects = await _context.Subjects
+            .ToListAsync();
+
+                var response = subjects.Select(subject => new
+                {
+                    SubjectId = subject.SubjectId,
+                    SubjectName = subject.SubjectName
+                });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetSingleSubject([FromRoute] int id)
         {
-            var subject = await _context.Subjects
-            .Select(c => new SubjectResponseDto
+            try
             {
-                SubjectId = c.SubjectId,
-                SubjectName = c.SubjectName,
-            })
+                var subject = await _context.Subjects
             .FirstOrDefaultAsync(i => i.SubjectId == id);
 
-            if (subject == null)
-            {
-                return NotFound(new { message = "Subject not found." });
-            }
+                if (subject == null)
+                {
+                    return NotFound(new { message = "Subject not found." });
+                }
 
-            return Ok(subject);
+                var response = new
+                {
+                    SubjectId = subject.SubjectId,
+                    SubjectName = subject.SubjectName
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
 
         [HttpPost]
@@ -56,15 +73,22 @@ namespace SchoolManagement.API.Controller
                 return BadRequest(ModelState);
             }
 
-            Subject req = new Subject
+            try
             {
-                SubjectName = subjectRequest.SubjectName,
-            };
+                Subject req = new Subject
+                {
+                    SubjectName = subjectRequest.SubjectName,
+                };
 
-            await _context.Subjects.AddAsync(req);
-            await _context.SaveChangesAsync();
+                await _context.Subjects.AddAsync(req);
+                await _context.SaveChangesAsync();
 
-            return StatusCode(201, new { message = "Subject created!" });
+                return StatusCode(201, new { message = "Subject created!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error" });
+            }
         }
 
         [HttpPut("{id:int}")]
@@ -75,34 +99,48 @@ namespace SchoolManagement.API.Controller
                 return BadRequest(ModelState);
             }
 
-            var subject = await _context.Subjects.FirstOrDefaultAsync(i => i.SubjectId == id);
-
-            if (subject == null)
+            try
             {
-                return NotFound(new { message = "Subject not found" });
+                var subject = await _context.Subjects.FirstOrDefaultAsync(i => i.SubjectId == id);
+
+                if (subject == null)
+                {
+                    return NotFound(new { message = "Subject not found" });
+                }
+
+                subject.SubjectName = subjectRequest.SubjectName;
+
+                await _context.SaveChangesAsync();
+
+                return StatusCode(201, new { message = "Subject updated!" });
             }
-
-            subject.SubjectName = subjectRequest.SubjectName;
-
-            await _context.SaveChangesAsync();
-
-            return StatusCode(201, new { message = "Subject updated!" });
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error" });
+            }
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteSubject([FromRoute] int id)
         {
-            var subject = await _context.Subjects.FirstOrDefaultAsync(i => i.SubjectId == id);
-
-            if (subject == null)
+            try
             {
-                return NotFound(new { message = "Subject not found" });
+                var subject = await _context.Subjects.FirstOrDefaultAsync(i => i.SubjectId == id);
+
+                if (subject == null)
+                {
+                    return NotFound(new { message = "Subject not found" });
+                }
+
+                _context.Remove(subject);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Remove(subject);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal Server Error" });
+            }
         }
     }
 }
