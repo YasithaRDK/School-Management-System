@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SchoolManagement.API.Data;
 using SchoolManagement.API.Data.Dtos;
+using SchoolManagement.API.Interfaces;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -10,10 +10,10 @@ namespace SchoolManagement.API.Controller
     [Route("/api/subjects")]
     public class SubjectController : ControllerBase
     {
-        private readonly ApplicationDBContext _context;
-        public SubjectController(ApplicationDBContext context)
+        private readonly ISubjectRepository _subjectRepository;
+        public SubjectController(ISubjectRepository subjectRepository)
         {
-            _context = context;
+            _subjectRepository = subjectRepository;
         }
 
         [HttpGet]
@@ -21,8 +21,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var subjects = await _context.Subjects
-            .ToListAsync();
+                var subjects = await _subjectRepository.GetAllSubjectsAsync();
 
                 var response = subjects.Select(subject => new
                 {
@@ -43,8 +42,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var subject = await _context.Subjects
-            .FirstOrDefaultAsync(i => i.SubjectId == id);
+                var subject = await _subjectRepository.GetSubjectByIdAsync(id);
 
                 if (subject == null)
                 {
@@ -80,8 +78,7 @@ namespace SchoolManagement.API.Controller
                     SubjectName = subjectRequest.SubjectName,
                 };
 
-                await _context.Subjects.AddAsync(req);
-                await _context.SaveChangesAsync();
+                await _subjectRepository.AddSubjectAsync(req);
 
                 return StatusCode(201, new { message = "Subject created!" });
             }
@@ -101,7 +98,7 @@ namespace SchoolManagement.API.Controller
 
             try
             {
-                var subject = await _context.Subjects.FirstOrDefaultAsync(i => i.SubjectId == id);
+                var subject = await _subjectRepository.GetSubjectByIdAsync(id);
 
                 if (subject == null)
                 {
@@ -110,7 +107,7 @@ namespace SchoolManagement.API.Controller
 
                 subject.SubjectName = subjectRequest.SubjectName;
 
-                await _context.SaveChangesAsync();
+                await _subjectRepository.UpdateSubjectAsync(subject);
 
                 return StatusCode(201, new { message = "Subject updated!" });
             }
@@ -125,15 +122,14 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var subject = await _context.Subjects.FirstOrDefaultAsync(i => i.SubjectId == id);
+                var subject = await _subjectRepository.GetSubjectByIdAsync(id);
 
                 if (subject == null)
                 {
                     return NotFound(new { message = "Subject not found" });
                 }
 
-                _context.Remove(subject);
-                await _context.SaveChangesAsync();
+                await _subjectRepository.DeleteSubjectAsync(subject);
 
                 return NoContent();
             }

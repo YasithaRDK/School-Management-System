@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SchoolManagement.API.Data;
 using SchoolManagement.API.Data.Dtos;
 using SchoolManagement.API.Interfaces;
 using SchoolManagement.API.Models;
