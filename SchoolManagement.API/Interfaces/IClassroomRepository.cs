@@ -9,5 +9,6 @@ namespace SchoolManagement.API.Interfaces
         Task AddClassroomAsync(Classroom classroom);
         Task UpdateClassroomAsync(Classroom classroom);
         Task DeleteClassroomAsync(Classroom classroom);
+        Task<bool> ClassroomExistsAsync(int id);
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
 using SchoolManagement.API.Data.Dtos;
+using SchoolManagement.API.Interfaces;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
@@ -10,10 +11,12 @@ namespace SchoolManagement.API.Controller
     [Route("/api/students")]
     public class StudentController : ControllerBase
     {
-        private readonly ApplicationDBContext _context;
-        public StudentController(ApplicationDBContext context)
+        private readonly IStudentRepository _studentRepository;
+        private readonly IClassroomRepository _classroomRepository;
+        public StudentController(IStudentRepository studentRepository, IClassroomRepository classroomRepository)
         {
-            _context = context;
+            _studentRepository = studentRepository;
+            _classroomRepository = classroomRepository;
         }
 
         [HttpGet]
@@ -21,9 +24,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var students = await _context.Students
-            .Include(s => s.Classroom)
-            .ToListAsync();
+                var students = await _studentRepository.GetAllStudentsAsync();
 
                 var response = students.Select(student => new
                 {
@@ -51,13 +52,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var student = await _context.Students
-                .Include(s => s.Classroom)
-                .ThenInclude(c => c.TeacherClassrooms)
-                .ThenInclude(tc => tc.Teacher)
-                .ThenInclude(t => t.TeacherSubjects)
-                .ThenInclude(ts => ts.Subject)
-                .FirstOrDefaultAsync(s => s.StudentId == id);
+                var student = await _studentRepository.GetStudentByIdAsync(id);
 
                 if (student == null)
                 {
@@ -100,9 +95,9 @@ namespace SchoolManagement.API.Controller
 
             try
             {
-                var existingClassroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.ClassroomId == studentRequest.ClassroomId);
+                var existingClassroom = await _classroomRepository.ClassroomExistsAsync(studentRequest.ClassroomId);
 
-                if (existingClassroom == null)
+                if (!existingClassroom)
                 {
                     return BadRequest(new { message = "Classroom not found" });
                 }
@@ -118,8 +113,7 @@ namespace SchoolManagement.API.Controller
                     ClassroomId = studentRequest.ClassroomId,
                 };
 
-                await _context.Students.AddAsync(req);
-                await _context.SaveChangesAsync();
+                await _studentRepository.AddStudentAsync(req);
 
                 return StatusCode(201, new { message = "Student created!" });
             }
@@ -139,16 +133,16 @@ namespace SchoolManagement.API.Controller
 
             try
             {
-                var student = await _context.Students.FirstOrDefaultAsync(i => i.StudentId == id);
+                var student = await _studentRepository.GetStudentByIdAsync(id);
 
                 if (student == null)
                 {
                     return NotFound(new { message = "Student not found." });
                 }
 
-                var existingClassroom = await _context.Classrooms.FirstOrDefaultAsync(c => c.ClassroomId == studentRequest.ClassroomId);
+                var existingClassroom = await _classroomRepository.ClassroomExistsAsync(studentRequest.ClassroomId);
 
-                if (existingClassroom == null)
+                if (!existingClassroom)
                 {
                     return BadRequest(new { message = "Classroom not found" });
                 }
@@ -161,7 +155,7 @@ namespace SchoolManagement.API.Controller
                 student.DateOfBirth = studentRequest.DateOfBirth;
                 student.ClassroomId = studentRequest.ClassroomId;
 
-                await _context.SaveChangesAsync();
+                await _studentRepository.UpdateStudentAsync(student);
 
                 return StatusCode(201, new { message = "Student updated!" });
             }
@@ -176,15 +170,14 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var student = await _context.Students.FirstOrDefaultAsync(i => i.StudentId == id);
+                var student = await _studentRepository.GetStudentByIdAsync(id);
 
                 if (student == null)
                 {
                     return NotFound(new { message = "Student not found." });
                 }
 
-                _context.Students.Remove(student);
-                await _context.SaveChangesAsync();
+                await _studentRepository.DeleteStudentAsync(student);
 
                 return NoContent();
             }

@@ -19,6 +19,11 @@ namespace SchoolManagement.API.Repository
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> ClassroomExistsAsync(int id)
+        {
+            return await _context.Classrooms.AnyAsync(c => c.ClassroomId == id);
+        }
+
         public async Task DeleteClassroomAsync(Classroom classroom)
         {
             _context.Classrooms.Remove(classroom);

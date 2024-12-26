@@ -11,10 +11,10 @@ namespace SchoolManagement.API.Controller
     [Route("/api/classrooms")]
     public class ClassroomController : ControllerBase
     {
-        private readonly IClassroomRepository _repository;
-        public ClassroomController(IClassroomRepository repository)
+        private readonly IClassroomRepository _classroomRepository;
+        public ClassroomController(IClassroomRepository classroomRepository)
         {
-            _repository = repository;
+            _classroomRepository = classroomRepository;
         }
 
         [HttpGet]
@@ -22,7 +22,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var classrooms = await _repository.GetAllClassroomsAsync();
+                var classrooms = await _classroomRepository.GetAllClassroomsAsync();
 
                 var response = classrooms.Select(classroom => new
                 {
@@ -43,7 +43,7 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var classroom = await _repository.GetClassroomByIdAsync(id);
+                var classroom = await _classroomRepository.GetClassroomByIdAsync(id);
 
                 if (classroom == null)
                 {
@@ -79,7 +79,7 @@ namespace SchoolManagement.API.Controller
                     ClassroomName = classroomRequest.ClassroomName,
                 };
 
-                await _repository.AddClassroomAsync(req);
+                await _classroomRepository.AddClassroomAsync(req);
 
                 return StatusCode(201, new { message = "Classroom created!" });
             }
@@ -99,7 +99,7 @@ namespace SchoolManagement.API.Controller
 
             try
             {
-                var classroom = await _repository.GetClassroomByIdAsync(id);
+                var classroom = await _classroomRepository.GetClassroomByIdAsync(id);
 
                 if (classroom == null)
                 {
@@ -108,7 +108,7 @@ namespace SchoolManagement.API.Controller
 
                 classroom.ClassroomName = classroomRequest.ClassroomName;
 
-                await _repository.UpdateClassroomAsync(classroom);
+                await _classroomRepository.UpdateClassroomAsync(classroom);
 
                 return StatusCode(201, new { message = "Classroom updated!" });
             }
@@ -123,14 +123,14 @@ namespace SchoolManagement.API.Controller
         {
             try
             {
-                var classroom = await _repository.GetClassroomByIdAsync(id);
+                var classroom = await _classroomRepository.GetClassroomByIdAsync(id);
 
                 if (classroom == null)
                 {
                     return NotFound(new { message = "Classroom not found" });
                 }
 
-                await _repository.DeleteClassroomAsync(classroom);
+                await _classroomRepository.DeleteClassroomAsync(classroom);
 
                 return NoContent();
             }
