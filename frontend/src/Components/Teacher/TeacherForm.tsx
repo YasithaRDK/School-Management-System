@@ -1,6 +1,6 @@
 import { Col, Form, Row } from "react-bootstrap";
 import { ITeacher } from "../../types/teacher.types";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   useCreateTeacherMutation,
   useUpdateTeacherMutation,
@@ -8,6 +8,8 @@ import {
 import { toast } from "react-toastify";
 import FormInput from "../FormInput/FormInput";
 import ActionButton from "../ActionButton/ActionButton";
+import { useFormik } from "formik";
+import { teacherValidationSchema } from "../../validationSchemas/teacherValidation";
 
 interface IProps {
   teacher: ITeacher | null;
@@ -15,20 +17,44 @@ interface IProps {
 }
 
 const TeacherForm: React.FC<IProps> = ({ teacher, setSelectedTeacher }) => {
-  const [formData, setFormData] = useState<Partial<ITeacher>>({
-    firstName: "",
-    lastName: "",
-    contactNo: "",
-    emailAddress: "",
-  });
-
+  // Mutations for creating and updating teacher
   const [createTeacher, { isLoading: creating }] = useCreateTeacherMutation();
   const [updateTeacher, { isLoading: updating }] = useUpdateTeacherMutation();
 
-  // Populate form data when a teacher is selected for editing
+  // Formik initialization for handling form values and validation
+  const formik = useFormik({
+    initialValues: {
+      firstName: "",
+      lastName: "",
+      contactNo: "",
+      emailAddress: "",
+    },
+    validationSchema: teacherValidationSchema, // Form validation schema
+    onSubmit: async (values) => {
+      try {
+        // Handle teacher update or create
+        if (teacher) {
+          await updateTeacher({
+            id: teacher.teacherId,
+            data: values,
+          }).unwrap();
+          toast.success("Teacher updated successfully!");
+        } else {
+          await createTeacher(values).unwrap();
+          toast.success("Teacher created successfully!");
+        }
+        resetForm();
+      } catch (error) {
+        toast.error("Something went wrong! Try again.");
+        console.error("Failed to save teacher:", error);
+      }
+    },
+  });
+
+  // Populate the form with teacher data if editing an existing teacher
   useEffect(() => {
     if (teacher) {
-      setFormData({
+      formik.setValues({
         firstName: teacher.firstName || "",
         lastName: teacher.lastName || "",
         contactNo: teacher.contactNo || "",
@@ -39,58 +65,23 @@ const TeacherForm: React.FC<IProps> = ({ teacher, setSelectedTeacher }) => {
     }
   }, [teacher]);
 
-  // Update form data on input change
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Handle form submission (create or update teacher)
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (Object.values(formData).some((value) => !value)) {
-      alert("Please fill out all fields.");
-      return;
-    }
-
-    try {
-      if (teacher) {
-        await updateTeacher({ id: teacher.teacherId, data: formData }).unwrap();
-        toast.success("Teacher updated successfully!");
-      } else {
-        await createTeacher(formData).unwrap();
-        toast.success("Teacher created successfully!");
-      }
-      resetForm();
-    } catch (error) {
-      toast.error("Something went wrong! Try again.");
-      console.error("Failed to save teacher:", error);
-    }
-  };
-
-  // Reset form data
+  // Reset the form to initial values
   const resetForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      contactNo: "",
-      emailAddress: "",
-    });
-    setSelectedTeacher(null);
+    formik.resetForm(); // Reset formik values to initial state
+    setSelectedTeacher(null); // Clear selected teacher after submit
   };
 
+  // Determine if the form has been modified
   const isFormModified =
-    Object.values(formData).some((value) => value !== "") || teacher;
+    Object.values(formik.values).some((value) => value !== "") || teacher;
 
   return (
     <div className="border-container mt-5">
+      {/* Form title */}
       <p className="title-text">Add Teacher</p>
-      <Form onSubmit={handleSubmit} className="form-cls">
+
+      {/* Form component */}
+      <Form onSubmit={formik.handleSubmit} className="form-cls">
         <Row className="mt-3">
           <Col md={6}>
             <FormInput
@@ -98,8 +89,11 @@ const TeacherForm: React.FC<IProps> = ({ teacher, setSelectedTeacher }) => {
               type="text"
               placeholder="John"
               name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
+              value={formik.values.firstName}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              isInvalid={formik.touched.firstName && !!formik.errors.firstName}
+              errorMessage={formik.errors.firstName}
             />
           </Col>
           <Col md={6}>
@@ -108,8 +102,11 @@ const TeacherForm: React.FC<IProps> = ({ teacher, setSelectedTeacher }) => {
               type="text"
               placeholder="Doe"
               name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
+              value={formik.values.lastName}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              isInvalid={formik.touched.lastName && !!formik.errors.lastName}
+              errorMessage={formik.errors.lastName}
             />
           </Col>
         </Row>
@@ -120,8 +117,11 @@ const TeacherForm: React.FC<IProps> = ({ teacher, setSelectedTeacher }) => {
               type="text"
               placeholder="0712345678"
               name="contactNo"
-              value={formData.contactNo}
-              onChange={handleChange}
+              value={formik.values.contactNo}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              isInvalid={formik.touched.contactNo && !!formik.errors.contactNo}
+              errorMessage={formik.errors.contactNo}
             />
           </Col>
           <Col md={6}>
@@ -130,8 +130,13 @@ const TeacherForm: React.FC<IProps> = ({ teacher, setSelectedTeacher }) => {
               type="email"
               placeholder="john.doe@example.com"
               name="emailAddress"
-              value={formData.emailAddress}
-              onChange={handleChange}
+              value={formik.values.emailAddress}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              isInvalid={
+                formik.touched.emailAddress && !!formik.errors.emailAddress
+              }
+              errorMessage={formik.errors.emailAddress}
             />
           </Col>
         </Row>
