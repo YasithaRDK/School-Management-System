@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data;
@@ -7,6 +8,7 @@ using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
 {
+    [EnableCors("AllowLocalhost5173")]
     [ApiController]
     [Route("/api/teachers")]
     public class TeacherController : ControllerBase

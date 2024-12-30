@@ -1,11 +1,12 @@
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SchoolManagement.API.Data.Dtos;
 using SchoolManagement.API.Interfaces;
 using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
 {
+    [EnableCors("AllowAllOrigins")]
     [ApiController]
     [Route("/api/subjects")]
     public class SubjectController : ControllerBase

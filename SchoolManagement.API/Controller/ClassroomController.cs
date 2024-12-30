@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
 {
+    [EnableCors("AllowAllOrigins")]
     [ApiController]
     [Route("/api/classrooms")]
     public class ClassroomController : ControllerBase

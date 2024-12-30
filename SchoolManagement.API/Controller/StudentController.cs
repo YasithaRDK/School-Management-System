@@ -6,6 +6,7 @@ using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
 {
+    [EnableCors("AllowAllOrigins")]
     [ApiController]
     [Route("/api/students")]
     public class StudentController : ControllerBase
@@ -35,6 +36,7 @@ namespace SchoolManagement.API.Controller
                     EmailAddress = student.EmailAddress,
                     DateOfBirth = student.DateOfBirth,
                     Age = student.Age,
+                    ClassroomId = student.Classroom?.ClassroomId,
                     ClassroomName = student.Classroom?.ClassroomName
                 });
 
