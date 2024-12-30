@@ -8,7 +8,7 @@ using SchoolManagement.API.Models;
 
 namespace SchoolManagement.API.Controller
 {
-    [EnableCors("AllowLocalhost5173")]
+    [EnableCors("AllowAllOrigins")]
     [ApiController]
     [Route("/api/teachers")]
     public class TeacherController : ControllerBase
