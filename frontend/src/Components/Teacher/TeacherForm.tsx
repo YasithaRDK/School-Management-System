@@ -82,6 +82,7 @@ const TeacherForm: React.FC<IProps> = ({ teacher, setSelectedTeacher }) => {
 
       {/* Form component */}
       <Form onSubmit={formik.handleSubmit} className="form-cls">
+        {/* Row 1 */}
         <Row className="mt-3">
           <Col md={6}>
             <FormInput
@@ -110,6 +111,8 @@ const TeacherForm: React.FC<IProps> = ({ teacher, setSelectedTeacher }) => {
             />
           </Col>
         </Row>
+
+        {/* Row 2 */}
         <Row>
           <Col md={6}>
             <FormInput
