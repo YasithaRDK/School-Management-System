@@ -14,10 +14,18 @@ export const classroomApi = createApi({
       providesTags: (result, error, id) => [{ type: "Classroom", id }],
     }),
     createClassroom: builder.mutation<any, any>({
-      query: (newClassroom) => ({
+      query: (data) => ({
         url: "classrooms",
         method: "POST",
-        body: newClassroom,
+        body: data,
+      }),
+      invalidatesTags: [{ type: "Classroom" }],
+    }),
+    updateClassroom: builder.mutation<any, { id: number; data: any }>({
+      query: ({ id, data }) => ({
+        url: `classrooms/${id}`,
+        method: "PUT",
+        body: data,
       }),
       invalidatesTags: [{ type: "Classroom" }],
     }),
@@ -35,5 +43,6 @@ export const {
   useGetClassroomsQuery,
   useGetClassroomByIdQuery,
   useCreateClassroomMutation,
+  useUpdateClassroomMutation,
   useDeleteClassroomMutation,
 } = classroomApi;

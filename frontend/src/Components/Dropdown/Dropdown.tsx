@@ -1,13 +1,13 @@
-import React from "react";
 import { Form } from "react-bootstrap";
 
 interface IDropdownProps {
   options: any[];
   valueKey: string;
   labelKey: string;
-  value: string | null; // Selected value
-  onChange: (value: string) => void; // Change handler
+  value: string | undefined;
+  onChange: (value: string) => void;
   placeholder?: string;
+  loading?: boolean;
 }
 
 const Dropdown: React.FC<IDropdownProps> = ({
@@ -17,20 +17,27 @@ const Dropdown: React.FC<IDropdownProps> = ({
   value,
   onChange,
   placeholder = "Select an option",
+  loading = false,
 }) => {
   return (
     <Form.Group className="mb-3">
       <Form.Label>Dropdown</Form.Label>
       <Form.Select
-        value={value || ""} // Bind the selected value
-        onChange={(e) => onChange(e.target.value)} // Handle value changes
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
       >
         <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option[valueKey]} value={option[valueKey]}>
-            {option[labelKey]}
+        {loading ? (
+          <option value="" disabled>
+            Loading...
           </option>
-        ))}
+        ) : (
+          options.map((option) => (
+            <option key={option[valueKey]} value={option[valueKey]}>
+              {option[labelKey]}
+            </option>
+          ))
+        )}
       </Form.Select>
     </Form.Group>
   );

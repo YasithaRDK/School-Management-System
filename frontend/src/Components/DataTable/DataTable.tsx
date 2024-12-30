@@ -1,5 +1,6 @@
-import { Button, Table } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 import "./DataTable.scss";
+import ActionButton from "../ActionButton/ActionButton";
 
 interface IColumn {
   key: string;
@@ -12,7 +13,19 @@ interface IProps {
   data: any[];
   onEdit: (item: any) => void;
   onDelete: (item: any) => void;
+  loading?: number | null;
+  actionButtons?: boolean;
 }
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  }).format(date);
+};
 
 const DataTable: React.FC<IProps> = ({
   title,
@@ -20,6 +33,8 @@ const DataTable: React.FC<IProps> = ({
   data,
   onEdit,
   onDelete,
+  loading,
+  actionButtons = false,
 }) => {
   return (
     <div className="border-container mt-5 mb-5">
@@ -39,22 +54,35 @@ const DataTable: React.FC<IProps> = ({
             <tr key={index}>
               <td className="fw-bold">{index + 1}</td>
               {headers.map((header) => (
-                <td key={header.key}>{item[header.key]}</td>
+                <td key={header.key}>
+                  {header.key === "dateOfBirth" // Check if the field is dateOfBirth
+                    ? formatDate(item[header.key]) // Format the date
+                    : item[header.key]}
+                </td>
               ))}
-              <td>
-                <div className="btn-container">
-                  <div>
-                    <Button variant="warning" onClick={() => onEdit(item)}>
-                      Edit
-                    </Button>
+              {actionButtons && (
+                <td>
+                  <div className="btn-container">
+                    <div>
+                      <ActionButton
+                        label="Edit"
+                        onClick={() => onEdit(item)}
+                        variant="warning"
+                        disabled={false}
+                      />
+                    </div>
+                    <div>
+                      <ActionButton
+                        label="Delete"
+                        onClick={() => onDelete(item)}
+                        variant="danger"
+                        loading={loading === item.studentId}
+                        disabled={loading === item.studentId}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Button variant="danger" onClick={() => onDelete(item)}>
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </td>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
