@@ -15,6 +15,7 @@ interface IProps {
   onDelete: (item: any) => void;
   loading?: number | null;
   actionButtons?: boolean;
+  idKey: string;
 }
 
 const formatDate = (dateString: string) => {
@@ -35,6 +36,7 @@ const DataTable: React.FC<IProps> = ({
   onDelete,
   loading,
   actionButtons = false,
+  idKey,
 }) => {
   return (
     <div className="border-container mt-5 mb-5">
@@ -76,8 +78,8 @@ const DataTable: React.FC<IProps> = ({
                         label="Delete"
                         onClick={() => onDelete(item)}
                         variant="danger"
-                        loading={loading === item.studentId}
-                        disabled={loading === item.studentId}
+                        loading={loading === item[idKey]}
+                        disabled={loading === item[idKey]}
                       />
                     </div>
                   </div>

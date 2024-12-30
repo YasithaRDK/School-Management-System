@@ -80,6 +80,7 @@ const StudentPage: React.FC = () => {
         onDelete={handleDelete}
         loading={deletingStudentId}
         actionButtons
+        idKey="studentId"
       />
     </Container>
   );
