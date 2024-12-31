@@ -52,30 +52,32 @@ const DataTable: React.FC<IProps> = ({
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => (
-            <tr key={index}>
-              <td className="fw-bold">{index + 1}</td>
-              {headers.map((header) => (
-                <td key={header.key}>
-                  {header.key === "dateOfBirth" // Check if the field is dateOfBirth
-                    ? formatDate(item[header.key]) // Format the date
-                    : item[header.key]}
-                </td>
-              ))}
-              {actionButtons && (
+          {data.length > 0 ? (
+            data.map((item, index) => (
+              <tr key={index}>
+                <td className="fw-bold">{index + 1}</td>
+                {headers.map((header) => (
+                  <td key={header.key}>
+                    {header.key === "dateOfBirth"
+                      ? formatDate(item[header.key])
+                      : item[header.key]}
+                  </td>
+                ))}
                 <td>
                   <div className="btn-container">
+                    {actionButtons && (
+                      <div>
+                        <ActionButton
+                          label="Edit"
+                          onClick={() => onEdit(item)}
+                          variant="warning"
+                          disabled={false}
+                        />
+                      </div>
+                    )}
                     <div>
                       <ActionButton
-                        label="Edit"
-                        onClick={() => onEdit(item)}
-                        variant="warning"
-                        disabled={false}
-                      />
-                    </div>
-                    <div>
-                      <ActionButton
-                        label="Delete"
+                        label={actionButtons ? "Delete" : "Deallocate"}
                         onClick={() => onDelete(item)}
                         variant="danger"
                         loading={loading === item[idKey]}
@@ -84,9 +86,15 @@ const DataTable: React.FC<IProps> = ({
                     </div>
                   </div>
                 </td>
-              )}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={headers.length + 2} className="text-center">
+                No data available
+              </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </Table>
     </div>

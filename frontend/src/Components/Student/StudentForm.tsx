@@ -217,6 +217,7 @@ const StudentForm: React.FC<IProps> = ({ student, setSelectedStudent }) => {
                 formik.touched.classroomId && !!formik.errors.classroomId
               }
               errorMessage={formik.errors.classroomId}
+              label="Classroom"
             />
           </Col>
         </Row>

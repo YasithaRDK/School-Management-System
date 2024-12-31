@@ -8,6 +8,7 @@ export interface IStudent {
   emailAddress: string;
   dateOfBirth: string;
   classroomId: string;
+  classroomName: string;
 }
 
 // Define the payload structure for updating a student

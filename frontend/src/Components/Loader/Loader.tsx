@@ -1,9 +1,13 @@
 import { Spinner } from "react-bootstrap";
 
-const Loader = () => {
+interface IProps {
+  height?: number;
+}
+
+const Loader: React.FC<IProps> = ({ height = 100 }) => {
   return (
     <div
-      style={{ height: "100vh" }}
+      style={{ height: `${height}vh` }}
       className="d-flex justify-content-center align-items-center"
     >
       <Spinner animation="border" variant="primary" />
