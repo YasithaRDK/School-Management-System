@@ -60,13 +60,7 @@ const AllocateSubjectPage = () => {
   // Handle errors in allocated subjects fetching
   useEffect(() => {
     if (isSubjectsError) {
-      if ("status" in subjectsError && subjectsError.status === 404) {
-        toast.success("No allocated subject to this teacher");
-      } else {
-        console.error("Error fetching allocated subjects:", subjectsError);
-      }
-
-      // Clear subjects in case of error
+      console.error("Error fetching allocated subjects:", subjectsError);
       setSubjects([]);
     }
   }, [isSubjectsError, subjectsError]);

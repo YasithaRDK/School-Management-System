@@ -4,6 +4,7 @@ import { classroomApi } from "./api/classroomApi";
 import { teacherApi } from "./api/teacher.Api";
 import { subjectApi } from "./api/subjectApi";
 import { allocateSubjectApi } from "./api/allocateSubjectApi";
+import { allocateClassroomApi } from "./api/allocateClassroomApi";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     [teacherApi.reducerPath]: teacherApi.reducer,
     [subjectApi.reducerPath]: subjectApi.reducer,
     [allocateSubjectApi.reducerPath]: allocateSubjectApi.reducer,
+    [allocateClassroomApi.reducerPath]: allocateClassroomApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -19,7 +21,8 @@ export const store = configureStore({
       classroomApi.middleware,
       teacherApi.middleware,
       subjectApi.middleware,
-      allocateSubjectApi.middleware
+      allocateSubjectApi.middleware,
+      allocateClassroomApi.middleware
     ),
 });
 
